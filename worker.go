@@ -46,27 +46,32 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 	log.Printf("worker started: redis list %q -> pubsub topic %q", mapping.RedisList, mapping.PubSubTopic)
 
 	for {
-		// BLPOP blocks until a message is available or ctx is cancelled.
-		// A timeout of 0 means block indefinitely.
-		result, err := rdb.BLPop(ctx, 0, mapping.RedisList).Result()
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil
-			}
-			log.Printf("BLPOP error for list %q: %v; retrying in 1s", mapping.RedisList, err)
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-time.After(time.Second):
-			}
-			continue
-		}
-
-		// BLPop returns [key, value]; the payload is at index 1.
-		payload := result[1]
-
-		if !publishWithRetry(ctx, rdb, topic, mapping, payload) {
+		select {
+		case <-ctx.Done():
+			log.Println("worker stopped")
 			return nil
+		default:
+			result, err := rdb.BLPop(ctx, 5*time.Second, mapping.RedisList).Result()
+			if err != nil {
+				if ctx.Err() != nil {
+					return nil
+				}
+				if err == redis.Nil {
+					// Timeout, no message available; just continue
+					continue
+				}
+				log.Printf("BLPOP error for list %q: %v; retrying in 1s", mapping.RedisList, err)
+				time.Sleep(time.Second)
+				log.Printf("tick")
+				continue
+			}
+
+			// BLPop returns [key, value]; the payload is at index 1.
+			payload := result[1]
+
+			if !publishWithRetry(ctx, rdb, topic, mapping, payload) {
+				return nil
+			}
 		}
 	}
 }
