@@ -27,6 +27,15 @@ go.work.sum
 # env file
 .env
 
+# Real config file (copy config.example.yaml and fill in values)
+config.yaml
+
+# GCP service account key
+credentials.json
+
+# Compiled binary
+redsub
+
 # Editor/IDE
 # .idea/
 # .vscode/

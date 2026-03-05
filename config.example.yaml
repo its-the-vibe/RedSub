@@ -1,0 +1,12 @@
+redis:
+  host: "localhost"
+  port: 6379
+
+gcp:
+  project_id: "my-gcp-project"
+
+queues:
+  - redis_list: "my-queue"
+    pubsub_topic: "my-topic"
+  - redis_list: "another-queue"
+    pubsub_topic: "another-topic"

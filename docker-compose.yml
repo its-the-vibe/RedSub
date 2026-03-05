@@ -1,0 +1,17 @@
+services:
+  redsub:
+    build: .
+    read_only: true
+    restart: on-failure:10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Mount your real config file (copied from config.example.yaml and filled in).
+      - ./config.yaml:/config.yaml:ro
+      # Mount a GCP service account key if not using workload identity / ADC.
+      - ./credentials.json:/credentials.json:ro
+    environment:
+      # Uncomment and set if using a mounted service account key file.
+      GOOGLE_APPLICATION_CREDENTIALS: /credentials.json
+      #
+      # REDIS_PASSWORD is loaded from .env via env_file above.
