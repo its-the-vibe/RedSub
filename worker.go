@@ -62,7 +62,6 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 				}
 				log.Printf("BLPOP error for list %q: %v; retrying in 1s", mapping.RedisList, err)
 				time.Sleep(time.Second)
-				log.Printf("tick")
 				continue
 			}
 
