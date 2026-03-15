@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -40,8 +40,8 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 	}
 	defer pubsubClient.Close()
 
-	topic := pubsubClient.Topic(mapping.PubSubTopic)
-	defer topic.Stop()
+	publisher := pubsubClient.Publisher(fmt.Sprintf("projects/%s/topics/%s", cfg.GCP.ProjectID, mapping.PubSubTopic))
+	defer publisher.Stop()
 
 	log.Printf("worker started: redis list %q -> pubsub topic %q", mapping.RedisList, mapping.PubSubTopic)
 
@@ -68,7 +68,7 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 			// BLPop returns [key, value]; the payload is at index 1.
 			payload := result[1]
 
-			if !publishWithRetry(ctx, rdb, topic, mapping, payload) {
+			if !publishWithRetry(ctx, rdb, publisher, mapping, payload) {
 				return nil
 			}
 		}
@@ -79,11 +79,11 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 // maxPublishRetries times with exponential back-off. If all attempts fail the
 // message is pushed to the dead-letter Redis list so it is not lost.
 // It returns false only when ctx is cancelled (caller should stop the worker).
-func publishWithRetry(ctx context.Context, rdb *redis.Client, topic *pubsub.Topic, mapping QueueMapping, payload string) bool {
+func publishWithRetry(ctx context.Context, rdb *redis.Client, publisher *pubsub.Publisher, mapping QueueMapping, payload string) bool {
 	backoff := time.Second
 
 	for attempt := 1; attempt <= maxPublishRetries; attempt++ {
-		res := topic.Publish(ctx, &pubsub.Message{Data: []byte(payload)})
+		res := publisher.Publish(ctx, &pubsub.Message{Data: []byte(payload)})
 		_, err := res.Get(ctx)
 		if err == nil {
 			log.Printf("published message from list %q to topic %q", mapping.RedisList, mapping.PubSubTopic)
