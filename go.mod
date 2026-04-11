@@ -1,6 +1,6 @@
 module github.com/its-the-vibe/redsub
 
-go 1.26.1
+go 1.26.2
 
 require (
 	cloud.google.com/go/pubsub/v2 v2.5.1
