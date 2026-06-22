@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	cloud.google.com/go/pubsub/v2 v2.6.0
-	github.com/redis/go-redis/v9 v9.20.1
+	github.com/redis/go-redis/v9 v9.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
