@@ -34,6 +34,10 @@ func runWorker(ctx context.Context, cfg *Config, redisPassword string, mapping Q
 	})
 	defer rdb.Close()
 
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("failed to connect to Redis: %v", err)
+	}
+
 	pubsubClient, err := pubsub.NewClient(ctx, cfg.GCP.ProjectID)
 	if err != nil {
 		return fmt.Errorf("creating pubsub client: %w", err)
