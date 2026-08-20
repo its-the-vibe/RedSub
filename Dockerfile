@@ -1,4 +1,7 @@
-FROM golang:1.26.6-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.6-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -6,13 +9,12 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o redsub .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o redsub .
 
-FROM scratch
-
-# CA certificates are required for TLS connections to GCP Pub/Sub.
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+FROM gcr.io/distroless/static-debian13:nonroot
 
 COPY --from=builder /app/redsub /redsub
+
+USER nonroot:nonroot
 
 ENTRYPOINT ["/redsub", "--config", "/config.yaml"]

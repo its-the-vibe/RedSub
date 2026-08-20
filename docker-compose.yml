@@ -1,7 +1,10 @@
 services:
   redsub:
     build: .
+    image: ghcr.io/its-the-vibe/redsub:latest
+    pull_policy: always
     read_only: true
+    user: "${UID:-65532}:${GID:-65532}"
     restart: on-failure:10
     extra_hosts:
       - "host.docker.internal:host-gateway"
