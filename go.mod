@@ -3,7 +3,7 @@ module github.com/its-the-vibe/redsub
 go 1.27.0
 
 require (
-	cloud.google.com/go/pubsub/v2 v2.6.2
+	cloud.google.com/go/pubsub/v2 v2.7.0
 	github.com/redis/go-redis/v9 v9.22.0
 	gopkg.in/yaml.v3 v3.0.1
 )
